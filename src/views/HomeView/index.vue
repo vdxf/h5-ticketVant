@@ -15,7 +15,7 @@
           <van-search
               v-model="searchValue"
               show-action
-              placeholder="请输入搜索关键词"
+              placeholder="请输入车牌号"
               @search="handleSearch"
 
           >
