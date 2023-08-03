@@ -13,82 +13,29 @@
       <div class="nav-search">
         <div class="search-form">
           <van-search
-              v-model="searchValue"
+              v-model="keyword"
               show-action
-              placeholder="请输入车牌号"
+              placeholder="请输入搜索关键词"
               @search="handleSearch"
-
           >
             <template #action>
               <div @click="handleSearch">搜索</div>
             </template>
           </van-search>
         </div>
-        <button class="screen" @click.stop="handleFilter">
-          <i></i>
-          筛选
-        </button>
       </div>
     </div>
 
-    <div class="screen-view" v-show="isFilter" @click="isFilter = false">
-      <div class="screen-wrap" @click.stop="$emit('null')">
-        <div class="screen-content">
-          <div class="screen-item">
-            <span>状态</span>
-            <button>待发放</button>
-            <button>领取完成</button>
-            <button>部分领取</button>
-            <button>已作废</button>
-          </div>
-          <div class="screen-item">
-            <span>车牌号</span>
-            <input type="text" placeholder="请输入车牌号">
-          </div>
-          <div class="screen-item">
-            <span>车主姓名</span>
-            <input type="text" placeholder="请输入车主姓名">
-          </div>
-          <div class="screen-item">
-            <span>创建时间</span>
-            <input class="start-time time" type="text" placeholder="开始时间" @click.stop="isStartTime = true"
-                   v-model="startTime">
-            <div class="start-time-info" v-show="isStartTime" @click.stop="isStartTime = false">
-              <van-datetime-picker
-                  v-model="currentDate"
-                  type="date"
-                  :columns-order="['year', 'month', 'day']"
-                  :formatter="formatter"
-                  @confirm="handleConfirmStart"
-              />
-            </div>
-            <div class="icon">-</div>
-            <input class="end-time time" type="text" placeholder="结束时间" @click.stop="isEndTime = true"
-                   v-model="endTime">
-            <div class="end-time-info" v-show="isEndTime" @click.stop="isEndTime = false">
-              <van-datetime-picker
-                  v-model="currentDate"
-                  type="date"
-                  :columns-order="['year', 'month', 'day']"
-                  :formatter="formatter"
-                  @confirm="handleConfirmEnd"
-              />
-            </div>
-          </div>
-        </div>
-        <button class="reset-button" type="reset">重置</button>
-        <button class="screen-button" @click="isFilter = false">筛选</button>
-      </div>
-    </div>
-
-    <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+    <van-pull-refresh class="content" v-model="refreshing" @refresh="handleRefresh" ref="view">
       <van-list
           v-model="loading"
           :finished="finished"
           finished-text="没有更多了"
-          @load="onLoad"
+          :error.sync="error"
+          error-text="请求失败，点击重新加载"
+          @load="handleLoad"
       >
-        <van-cell v-for="item in currentPageData" :key="item.id" @click="handleImageDetail(item.id)">
+        <van-cell v-for="item in imageList" :key="item.id" @click="handleImageDetail(item.id)">
           <template>
             <div class="image-detail">
               <img :src="imageUrl(item.file.filepath)" alt="img">
@@ -99,61 +46,43 @@
               </div>
             </div>
             <div class="image-button-group">
-              <button @click.stop="handleUpdataImage({...item})">更新</button>
-              <button @click.stop="handleDeleteImage(item.id)">删除</button>
+              <button v-preventReClick @click.stop="handleUpdataImage({ ...item } )">更新</button>
+              <button @click.stop="handleDeleteImage( item.id) ">删除</button>
             </div>
           </template>
         </van-cell>
       </van-list>
     </van-pull-refresh>
-
-    <div class="popup-view" v-show="isPopup" @click="isPopup = false">
-      <div class="content" @click.stop="$emit('null')">
-        <h2>温馨提示</h2>
-        <p>确认要删除这条数据吗？</p>
-        <div class="button-box">
-          <button class="cancle-button" @click.stop="isPopup = false">取消</button>
-          <button class="grant-button" @click.stop="handleReissue">删除</button>
-        </div>
-      </div>
-    </div>
-
-    <transition name="fade">
-      <loading v-if="isLoading"></loading>
-    </transition>
-
   </div>
 </template>
 
 <script>
 import {doTabulation, doDelete} from '@/api/'
-import {Throttle} from "@/utils/common";
+import {Dialog} from 'vant';
+import {Toast} from 'vant';
 
 export default {
   data() {
     return {
-      isFilter: false,
-      isStartTime: false,
-      isEndTime: false,
-      currentDate: new Date(),
-      startTime: '',
-      endTime: '',
-      searchValue: '',
-      searchList: '',
-      imageList: '',
-      current: 1,
-      length: 10,
-      currentPageData: '',
-      totalPage: 1,
-      type: '',
-      title: '',
-      description: '',
+      keyword: '',
+      keyword111: '',
+      imageList: [],
+      current: 0,
       loading: false,
       finished: false,
+      error: false,
       refreshing: false,
-      isLoading: false,
-      id: '',
-      isPopup: false,
+    }
+  },
+  watch: {
+    'keyword': {
+      immediate: true,
+      handler ( nv ) {
+        if (!nv) {
+          this.keyword111 = nv
+          this.handleRefresh()
+        }
+      }
     }
   },
   methods: {
@@ -162,80 +91,46 @@ export default {
       window.localStorage.removeItem('token')
       this.$router.replace('/login')
     },
-    //筛选
-    handleFilter() {
-      this.isFilter = !this.isFilter
-    },
-    formatter(type, val) {
-      if (type === 'year') {
-        return val + '年';
-      }
-      if (type === 'month') {
-        return val + '月';
-      }
-      if (type === 'day') {
-        return val + '日';
-      }
-      return val;
-    },
-    handleConfirmStart(val) {
-      this.formatter()
-      this.startTime = val
-    },
-    handleConfirmEnd(val) {
-      this.formatter()
-      this.endTime = val
-    },
+    //搜索
     handleSearch() {
-      this.isLoading = true;
-      const { searchValue } = this
-      if ( searchValue ) {
-        this.searchList = this.imageList.filter((item => (item.title).toString().indexOf(searchValue) >= 0))
-        this.onLoad()
-      }
+      this.keyword111 = this.keyword
+      Toast.loading({
+        message: '加载中...',
+        forbidClick: true,
+      });
+      this.handleRefresh()
+      this.$refs.view.$el.scrollTop = 0
     },
     //获取图片列表
     reqDataList(current) {
-      doTabulation({current: current, length: 10}).then(result => {
-        this.imageList = result.list.reverse()
-        this.totalPage = Math.ceil(this.imageList.length / this.length)
-        this.totalPage = this.totalPage === 0 ? 1 : this.totalPage
+      doTabulation({
+        current: current,
+        length: 10,
+        keyword: this.keyword111,
+      }).then(result => {
+        const {list, count} = result
+        this.imageList = current === 1 ? list : [...this.imageList, ...list]
+        this.finished = this.imageList.length >= count
         this.current = current
-        this.loading = false;
-        this.isLoading = false;
-        this.refreshing = false;
-        this.getCurrentPageData()
       }).catch(error => {
-        this.finished = true
+        console.log('error =>', error)
+        this.error = true
+      }).finally(() => {
+        this.loading = false
+        this.refreshing = false
       })
     },
-    getCurrentPageData() {
-      let end = this.current * this.length;
-      this.currentPageData = this.imageList.slice(0, end);
-      this.current ++
+    handleLoad() {
+      this.reqDataList(this.current + 1)
     },
-    onLoad: Throttle(function () {
-          if ( this.searchList ) {
-            this.currentPageData = this.searchList
-            this.isLoading = false;
-          } else {
-            this.reqDataList(this.current)
-            this.loading = false;
-            if (this.current > this.totalPage) {
-              this.finished = true
-            }
-          }
-        },1000),
-    onRefresh(){
-      this.finished = false;
+    handleRefresh() {
       this.reqDataList(1)
-      this.loading = true;
     },
     //获取图片url路径
     imageUrl(filepath) {
       return ("https://img.daysnap.cn/api/" + filepath)
     },
-    handleImageDetail(id){
+    handleImageDetail(id) {
       this.$router.push({
         path: '/imagedetail',
         query: {
@@ -243,7 +138,7 @@ export default {
         }
       })
     },
-    handleUpdataImage(data = {}){
+    handleUpdataImage(data = {}) {
       this.$router.push({
         path: '/imagecreate',
         query: {
@@ -253,21 +148,20 @@ export default {
     },
     // 删除图片
     handleDeleteImage(id) {
-      this.id = id
-      this.isPopup = true
+      Dialog.confirm({
+        title: '温馨提示',
+        message: '确认要删除吗',
+      }).then(() => {
+        doDelete(id).then(() => {
+          this.isPopup = false
+          this.reqDataList(1)
+        }).catch(error => {
+          console.dir(error)
+        })
+      }).catch(() => {
+            // on cancel
+      });
     },
-    handleReissue() {
-      const {id} = this
-      doDelete(id).then(() => {
-        this.isPopup = false
-        this.reqDataList(1)
-      }).catch(error => {
-        console.dir(error)
-      })
-    },
-  },
-  mounted() {
-    this.isLoading = true
   }
 }
 </script>
@@ -276,10 +170,17 @@ export default {
 @import '@/assets/sass/define.scss';
 
 .home-view {
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   height: 100vh;
   position: relative;
   padding-bottom: j(50);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .home-nav {
@@ -524,20 +425,24 @@ export default {
 .image-button-group {
   display: flex;
   margin-top: j(20);
+
   button {
     width: j(40);
     border: none;
     background-color: rgba(150, 250, 250, 0.99);
     border-radius: j(8);
-    flex:1
+    flex: 1
   }
+
   button:last-child {
     margin-left: j(10);
   }
 }
+
 .van-list {
   margin-bottom: j(50);
 }
+
 .popup-view {
   position: fixed;
   top: 0;
@@ -548,6 +453,7 @@ export default {
   background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
+
   .content {
     width: j(320);
     margin: 0 auto;
@@ -557,6 +463,7 @@ export default {
     flex-direction: column;
     align-items: center;
     box-sizing: border-box;
+
     h2 {
       font-size: j(17);
       font-weight: 500;
@@ -565,6 +472,7 @@ export default {
       margin-top: j(32);
       margin-bottom: j(16);
     }
+
     p {
       font-size: j(17);
       color: #666666;
@@ -573,11 +481,13 @@ export default {
     }
   }
 }
+
 .button-box {
   width: 100%;
   display: flex;
   flex-direction: row;
   border-top: 1px solid #D9D9D9;
+
   button {
     border: none;
     width: 50%;
@@ -590,11 +500,13 @@ export default {
     box-sizing: border-box;
   }
 }
+
 .cancle-button {
   border: none;
   color: #333333;
   border-right: 1px solid #D9D9D9;
 }
+
 .grant-button {
   border: none;
   color: #2061E6;

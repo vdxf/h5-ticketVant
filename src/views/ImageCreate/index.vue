@@ -24,9 +24,6 @@
         <button type="submit" class="c-button" @click="handleUploadImage">提交</button>
       </div>
     </div>
-    <transition name="fade">
-      <loading v-if="isLoading"></loading>
-    </transition>
   </div>
 </template>
 
@@ -55,10 +52,8 @@ export default {
       formData.append('file', this.files[0]);
 
       doFile(formData).then(result => {
-        console.log(result)
         this.fileId = result.id
         this.imgUrl = ("https://img.daysnap.cn/api/" + result.filepath)
-        console.log(this.imgUrl)
       }).catch(error => {
         alert(error.response.data.msg)
       })
@@ -79,15 +74,13 @@ export default {
        doGain({title, description, type, fileId}).then(result => {
          this.$router.replace('/home')
        }).catch(error => {
-         console.dir(error)
          alert(error.response.data.msg)
        })
      }
     },
   },
-  created() {
-    this.isLoading = true
-    if (this.$route.query.data) {
+  mounted() {
+    if (this.$route.query.data.file) {
       this.data = this.$route.query.data
       const {id, title, description, type,} = this.$route.query.data
       const {fileId, filepath} = this.$route.query.data.file
@@ -99,9 +92,6 @@ export default {
       this.imgUrl = "https://img.daysnap.cn/api/" + filepath
     }
   },
-  mounted() {
-    this.isLoading = false
-  }
 }
 </script>
 

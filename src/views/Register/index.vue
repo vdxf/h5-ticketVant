@@ -27,6 +27,7 @@
 <script>
 import {doEmailSend} from '@/api'
 import {doRegister} from '@/api'
+import {Toast} from "vant";
 
 export default {
   data() {
@@ -61,12 +62,15 @@ export default {
     },
     //注册
     handleRegister() {
+      Toast.loading({
+        message: '加载中...',
+        forbidClick: true,
+      });
       const {nickname, email, password, captcha} = this
       doRegister({nickname, email, password, captcha}).then(result => {
         this.$router.push('/login')
         console.log(result)
       }).catch(error => {
-        // console.dir(error)
         alert(error.response.data.msg)
       })
     },

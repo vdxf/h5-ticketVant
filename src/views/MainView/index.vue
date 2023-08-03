@@ -1,9 +1,6 @@
 <template>
-  <div>
-    <div>
-      <router-view></router-view>
-    </div>
-
+  <div class="main-view">
+    <router-view class="main-content"></router-view>
     <van-tabbar v-model="active" route>
       <van-tabbar-item replace to="/home" icon="home-o">首页</van-tabbar-item>
       <van-tabbar-item replace to="/userview" icon="friends-o">用户</van-tabbar-item>
@@ -24,6 +21,18 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/assets/sass/define.scss';
+
+.main-view {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+}
+
 .image-add {
   display: flex;
   justify-content: center;

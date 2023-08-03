@@ -33,10 +33,9 @@
 
 <script>
 import {doLogin} from '@/api'
-import Loading from "@/components/Loading/index.vue";
+import {Toast} from 'vant';
 
 export default {
-  components: {Loading},
   data() {
     return {
       type: 'password',
@@ -56,14 +55,18 @@ export default {
     },
     //登录
     handleSubmit() {
-      this.isLoading = true
+      Toast.loading({
+        message: '加载中...',
+        forbidClick: true,
+      });
       const {email, password} = this
       doLogin({email, password}).then(result => {
         window.localStorage.setItem('token', result.token)
         this.isLoading = false
         this.$router.replace('/home')
+        Toast.success('登录成功')
       }).catch(error => {
-        alert(error.response.data.msg)
+        Toast.fail(error.response.data.msg)
       })
     },
   },

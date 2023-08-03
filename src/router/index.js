@@ -14,7 +14,7 @@ const routes = [
                 path: "/home",
                 name: 'HomeView',
                 component: () => import('@/views/HomeView'),
-                meta: {title: '首页'},
+                meta: {title: '首页1'},
             },
             {
                 path: "/userview",
@@ -51,7 +51,10 @@ const routes = [
 ]
 
 const router = new VueRouter({
-    routes
+    routes,
+    scrollBehavior ( to, from, savedPositon) {
+        return { y: 0 }
+    }
 })
 
 // 登录权限判断
