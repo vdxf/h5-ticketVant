@@ -3,7 +3,7 @@
     <div class="c-card">
       <div class="section-content">
         <label class="choose-image">
-          <img :src=imgUrl alt="img" v-if="imgUrl">
+          <vs-image :src=imgUrl alt="img" v-if="imgUrl"/>
           <img src="@/assets/images/imageUpload.jpg" alt="img" v-else>
           <input type="file" @change="handleFiles" style="opacity: 0">
         </label>
@@ -29,7 +29,7 @@
 
 <script>
 import {doFile, doGain, doUpdata} from "@/api";
-import Loading from "@/components/Loading/index.vue";
+import VsImage from "@/components/VsImage.vue";
 
 export default {
   data() {
@@ -92,6 +92,9 @@ export default {
       this.imgUrl = "https://img.daysnap.cn/api/" + filepath
     }
   },
+  components: {
+    VsImage,
+  }
 }
 </script>
 

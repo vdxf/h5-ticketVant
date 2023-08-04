@@ -38,7 +38,7 @@
         <van-cell v-for="item in imageList" :key="item.id" @click="handleImageDetail(item.id)">
           <template>
             <div class="image-detail">
-              <img :src="imageUrl(item.file.filepath)" alt="img">
+              <vs-image :src="item.file.filepath" wr="200" alt="img" />
               <div class="detail-content">
                 <span>{{ item.title }}</span>
                 <span>{{ item.updatedAt }}</span>
@@ -57,9 +57,11 @@
 </template>
 
 <script>
-import {doTabulation, doDelete} from '@/api/'
+import {doTabulation, doDelete, doDetail} from '@/api/'
 import {Dialog} from 'vant';
 import {Toast} from 'vant';
+import VsImage from "@/components/VsImage.vue";
+import {withLoading} from "@/utils/withLoading";
 
 export default {
   data() {
@@ -146,8 +148,20 @@ export default {
         }
       })
     },
+    async sheep (ms){
+      return new Promise((resolve) => {
+        setTimeout(resolve, ms)
+      })
+    },
     // 删除图片
-    handleDeleteImage(id) {
+    async handleDeleteImage(id) {
+      const d = withLoading(async ()=>{
+        console.log('11')
+        await  this.sheep(3000)
+        alert(1)
+      })
+      await d()
+
       Dialog.confirm({
         title: '温馨提示',
         message: '确认要删除吗',
@@ -162,6 +176,9 @@ export default {
             // on cancel
       });
     },
+  },
+  components: {
+    VsImage
   }
 }
 </script>

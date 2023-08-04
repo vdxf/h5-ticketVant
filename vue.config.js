@@ -11,7 +11,7 @@ module.exports = defineConfig({
         target: 'https://api.daysnap.cn',
         changeOrigin: true,
         pathRewrite: {
-          // '^/api': ''
+          '^/api': ''
         }
       },
     },

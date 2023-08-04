@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import {withLoading} from "@/utils/withLoading";
 
 // 发送邮件
 export const doEmailSend = (data = {}) => {
@@ -64,12 +65,12 @@ export const doUpdata = (data = {}, id) => {
 }
 
 //删除
-export const doDelete = (id) => {
+export const doDelete = withLoading((id) => {
     return request({
         url: `/api/v1/picture/${id}`,
         method: 'DELETE',
     })
-}
+})
 
 //详情
 export const doDetail = (data) => {

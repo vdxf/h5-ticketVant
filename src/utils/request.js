@@ -1,4 +1,5 @@
 import axios from 'axios'
+import {Toast} from "vant";
 
 const ajax = axios.create({
     baseURL: '',
